@@ -23,9 +23,9 @@
             </intent-filter>
         </activity>
         
-        <!-- Actividad para agregar/editar notas -->
+        <!-- Actividad para agregar/editar transacciones -->
         <activity
-            android:name=".AddEditNoteActivity"
+            android:name=".AddTransactionActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
         

@@ -4,23 +4,35 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.myapplication.adapter.NoteAdapter
-import com.example.myapplication.data.Note
-import com.example.myapplication.viewmodel.NoteViewModel
+import com.example.myapplication.adapter.TransactionAdapter
+import com.example.myapplication.data.Transaction
+import com.example.myapplication.data.TransactionType
+import com.example.myapplication.viewmodel.FinanceViewModel
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.example.otramas.R
+import java.text.NumberFormat
+import java.util.*
+
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var noteViewModel: NoteViewModel
+    private lateinit var financeViewModel: FinanceViewModel
     private lateinit var recyclerView: RecyclerView
-    private lateinit var fabAddNote: FloatingActionButton
-    private lateinit var tvEmptyState: TextView
-    private lateinit var noteAdapter: NoteAdapter
+    private lateinit var fabAddTransaction: FloatingActionButton
+    private lateinit var emptyStateLayout: LinearLayout
+    private lateinit var transactionAdapter: TransactionAdapter
+    
+    // Vistas de estadísticas
+    private lateinit var tvTotalSavings: TextView
+    private lateinit var tvPhysicalMoney: TextView
+    private lateinit var tvDigitalMoney: TextView
+    private lateinit var tvTotalRecords: TextView
+    private lateinit var tvDeposits: TextView
+    private lateinit var tvWithdrawals: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,55 +40,77 @@ class MainActivity : AppCompatActivity() {
 
         // Inicializar vistas
         recyclerView = findViewById(R.id.recyclerView)
-        fabAddNote = findViewById(R.id.fabAddNote)
-        tvEmptyState = findViewById(R.id.tvEmptyState)
+        fabAddTransaction = findViewById(R.id.fabAddNote)
+        emptyStateLayout = findViewById(R.id.emptyStateLayout)
+        
+        // Vistas de estadísticas
+        tvTotalSavings = findViewById(R.id.tvTotalNotes)
+        tvPhysicalMoney = findViewById(R.id.tvShortNotes)
+        tvDigitalMoney = findViewById(R.id.tvLongNotes)
+        tvTotalRecords = findViewById(R.id.tvTotalRegistros)
+        tvDeposits = findViewById(R.id.tvTodayNotes)
+        tvWithdrawals = findViewById(R.id.tvEditedNotes)
 
         // Configurar RecyclerView
         setupRecyclerView()
 
         // Inicializar ViewModel
-        noteViewModel = ViewModelProvider(this)[NoteViewModel::class.java]
+        financeViewModel = ViewModelProvider(this)[FinanceViewModel::class.java]
 
-        // Observar cambios en las notas
-        noteViewModel.allNotes.observe(this) { notes ->
-            noteAdapter.setNotes(notes)
-            updateEmptyState(notes.isEmpty())
+        // Observar cambios en las transacciones
+        financeViewModel.allTransactions.observe(this) { transactions ->
+            transactionAdapter.setTransactions(transactions)
+            updateEmptyState(transactions.isEmpty())
+            updateStatistics(transactions)
+        }
+        
+        // Observar balances
+        financeViewModel.totalBalance.observe(this) { balance ->
+            tvTotalSavings.text = formatCurrency(balance ?: 0.0)
+        }
+        
+        financeViewModel.physicalBalance.observe(this) { balance ->
+            tvPhysicalMoney.text = formatCurrency(balance ?: 0.0)
+        }
+        
+        financeViewModel.digitalBalance.observe(this) { balance ->
+            tvDigitalMoney.text = formatCurrency(balance ?: 0.0)
         }
 
         // Configurar FAB
-        fabAddNote.setOnClickListener {
-            val intent = Intent(this, AddEditNoteActivity::class.java)
+        fabAddTransaction.setOnClickListener {
+            val intent = Intent(this, AddTransactionActivity::class.java)
             startActivity(intent)
         }
     }
 
     private fun setupRecyclerView() {
-        noteAdapter = NoteAdapter(
-            onNoteClick = { note ->
-                // Abrir nota para editar
-                val intent = Intent(this, AddEditNoteActivity::class.java)
-                intent.putExtra("NOTE_ID", note.id)
+        transactionAdapter = TransactionAdapter(
+            onTransactionClick = { transaction ->
+                // Abrir transacción para editar
+                val intent = Intent(this, AddTransactionActivity::class.java)
+                intent.putExtra("TRANSACTION_ID", transaction.id)
                 startActivity(intent)
             },
-            onNoteLongClick = { note ->
+            onTransactionLongClick = { transaction ->
                 // Mostrar diálogo para eliminar
-                showDeleteDialog(note)
+                showDeleteDialog(transaction)
             }
         )
 
         recyclerView.apply {
-            adapter = noteAdapter
+            adapter = transactionAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
             setHasFixedSize(true)
         }
     }
 
-    private fun showDeleteDialog(note: Note) {
+    private fun showDeleteDialog(transaction: Transaction) {
         AlertDialog.Builder(this)
-            .setTitle("Eliminar nota")
-            .setMessage("¿Estás seguro de que quieres eliminar '${note.title}'?")
+            .setTitle("Eliminar transacción")
+            .setMessage("¿Estás seguro de que quieres eliminar esta transacción de ${transaction.getFormattedAmount()}?")
             .setPositiveButton("Eliminar") { _, _ ->
-                noteViewModel.delete(note)
+                financeViewModel.delete(transaction)
             }
             .setNegativeButton("Cancelar", null)
             .show()
@@ -85,10 +119,28 @@ class MainActivity : AppCompatActivity() {
     private fun updateEmptyState(isEmpty: Boolean) {
         if (isEmpty) {
             recyclerView.visibility = View.GONE
-            tvEmptyState.visibility = View.VISIBLE
+            emptyStateLayout.visibility = View.VISIBLE
         } else {
             recyclerView.visibility = View.VISIBLE
-            tvEmptyState.visibility = View.GONE
+            emptyStateLayout.visibility = View.GONE
         }
+    }
+    
+    private fun updateStatistics(transactions: List<Transaction>) {
+        // Total de registros
+        tvTotalRecords.text = transactions.size.toString()
+        
+        // Total de depósitos (ingresos)
+        val deposits = transactions.count { it.type == TransactionType.INCOME }
+        tvDeposits.text = deposits.toString()
+        
+        // Total de retiros (gastos)
+        val withdrawals = transactions.count { it.type == TransactionType.EXPENSE }
+        tvWithdrawals.text = withdrawals.toString()
+    }
+    
+    private fun formatCurrency(amount: Double): String {
+        val format = NumberFormat.getCurrencyInstance(Locale("es", "AR"))
+        return format.format(amount)
     }
 }

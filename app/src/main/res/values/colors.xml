@@ -1,5 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Colores base -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Colores principales (Verde similar a Finanzas Libre) -->
+    <color name="primary_green">#7CB342</color>
+    <color name="primary_green_dark">#689F38</color>
+    <color name="primary_green_light">#AED581</color>
+    
+    <!-- Colores de fondo -->
+    <color name="background_light">#F5F5F5</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="card_green">#8BC34A</color>
+    
+    <!-- Colores de texto -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#9E9E9E</color>
+    <color name="text_white">#FFFFFF</color>
+    
+    <!-- Colores para cards de categorías -->
+    <color name="card_blue_bg">#E3F2FD</color>
+    <color name="card_blue_text">#42A5F5</color>
+    
+    <color name="card_purple_bg">#F3E5F5</color>
+    <color name="card_purple_text">#AB47BC</color>
+    
+    <!-- Colores de estadísticas -->
+    <color name="stat_orange">#FFA726</color>
+    <color name="stat_green">#66BB6A</color>
+    <color name="stat_red">#EF5350</color>
 </resources>

@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.otramas"
+    namespace = "com.example.myapplication"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.otramas"
+        applicationId = "com.example.myapplication"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
